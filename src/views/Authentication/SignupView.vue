@@ -87,6 +87,7 @@ const getAttendanceHistory = async () => {
 
 const registerAutoAttendance = async () => {
   isLoading.value = true;
+  console.log(userGroup.value)
   try {
      const response = await fetch(`${apiUrl}/user/storeUserInfo`, {
        method: 'POST',
