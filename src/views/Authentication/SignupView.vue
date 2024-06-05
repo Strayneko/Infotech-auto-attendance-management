@@ -2,6 +2,8 @@
 import DefaultAuthCard from '@/components/Auths/DefaultAuthCard.vue'
 import InputGroup from '@/components/Auths/InputGroup.vue'
 import { ref } from 'vue'
+import Swal from 'sweetalert2';
+import SelectGroupOne from '@/components/Forms/SelectGroup/SelectGroupOne.vue'
 
 const isLoading = ref(false);
 const isLoggedIn = ref(false);
@@ -9,6 +11,7 @@ const email = ref('');
 const password = ref('');
 const responseData: any = ref(null);
 const attendanceData: any = ref(null);
+const userGroup = ref(null);
 
 const employeeId = ref('');
 const latitude = ref('');
@@ -19,83 +22,116 @@ const apiUrl = import.meta.env.VITE_AUTO_ATTENDANCE_API_URL;
 
 const authenticate = async () => {
   isLoading.value = true;
-  const response = await fetch(`${apiUrl}/user/getUserInfo`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      email: email.value,
-      password: password.value,
+  try {
+    const response = await fetch(`${apiUrl}/user/getUserInfo`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email.value,
+        password: password.value,
+        type: 'get',
+      })
     })
-  })
 
-  const jsonResponse = await response.json();
-  console.log(jsonResponse)
-  isLoading.value = false;
-  isLoggedIn.value = true;
+    const jsonResponse = await response.json();
+    if(!jsonResponse.status) {
+      Swal.fire('Error', jsonResponse.message, 'error');
+    }
 
-  responseData.value = jsonResponse;
-  employeeId.value = jsonResponse.data.employeeId;
-  await getAttendanceHistory();
+    isLoading.value = false;
+
+    responseData.value = jsonResponse;
+    employeeId.value = jsonResponse.data.employeeId;
+    await getAttendanceHistory();
+  } catch (e) {
+    isLoading.value = false;
+    Swal.fire('Internal Server Error', 'Failed to log in into infotech server. Please try again later', 'error');
+  }
 }
 
 
 const getAttendanceHistory = async () => {
-  const response = await fetch(`${apiUrl}/attendance/history?getLast=1`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      companyId: responseData.value.data.companyId,
-      employeeId: responseData.value.data.employeeId,
-      customerId: responseData.value.data.customerId,
-      email: responseData.value.data.email,
-      token: responseData.value.data.token,
-      imei: responseData.value.data.imei,
-    }),
-  })
+  try {
+    const response = await fetch(`${apiUrl}/attendance/history?getLast=1`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        companyId: responseData.value.data.companyId,
+        employeeId: responseData.value.data.employeeId,
+        customerId: responseData.value.data.customerId,
+        email: responseData.value.data.email,
+        token: responseData.value.data.token,
+        imei: responseData.value.data.imei,
+      }),
+    })
 
-  const responseJson = await response.json();
+    const responseJson = await response.json();
+    if(!responseJson.status) {
+      Swal.fire('Error', responseJson.message, 'error');
+      return;
+    }
 
-  attendanceData.value = responseJson
-  latitude.value = responseJson.data.LatN;
-  longitude.value = responseJson.data.LngN;
-  clockInLocation.value = responseJson.data.LocationNameC;
+    attendanceData.value = responseJson
+    latitude.value = responseJson.data.LatN;
+    longitude.value = responseJson.data.LngN;
+    clockInLocation.value = responseJson.data.LocationNameC;
+    isLoggedIn.value = true;
+  } catch (e) {
+    Swal.fire('Internal server error', "Can't fetch user information. Please try again later", "error");
+  }
 }
 
 const registerAutoAttendance = async () => {
-   const response = await fetch(`${apiUrl}/user/storeUserInfo`, {
-     method: 'POST',
-     headers: {
-       'Content-Type': 'application/json',
-     },
-     body: JSON.stringify({
-          email: email.value,
-          imei: responseData.value.data.imei,
-          deviceId: responseData.value.data.deviceId,
-          customerId: responseData.value.data.customerId.toString(),
-          idNumber: responseData.value.data.idNumber,
-          token: responseData.value.data.token,
-          infotechUserId: responseData.value.data.infotechUserId,
-          companyId: responseData.value.data.companyId,
-          employeeId: employeeId.value,
-          userGroupId: 1,
-          attendanceData: {
-            locationName: clockInLocation.value,
-            latitude: latitude.value,
-            longitude: longitude.value,
-            timeZone: "25200",
-            isActive: 1,
-            remarks: '',
-          }
-     }),
-   });
+  isLoading.value = true;
+  try {
+     const response = await fetch(`${apiUrl}/user/storeUserInfo`, {
+       method: 'POST',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       body: JSON.stringify({
+            email: email.value,
+            imei: responseData.value.data.imei,
+            deviceId: responseData.value.data.deviceId,
+            customerId: responseData.value.data.customerId.toString(),
+            idNumber: responseData.value.data.idNumber,
+            token: responseData.value.data.token,
+            infotechUserId: responseData.value.data.infotechUserId,
+            companyId: responseData.value.data.companyId,
+            employeeId: employeeId.value,
+            userGroupId: userGroup.value || null,
+            attendanceData: {
+              locationName: clockInLocation.value,
+              latitude: latitude.value,
+              longitude: longitude.value,
+              timeZone: "25200",
+              isActive: 1,
+              remarks: '',
+            }
+       }),
+     });
 
-   const responseJson = await response.json();
+     const responseJson = await response.json();
+     isLoading.value = false;
+      if(!responseJson.status && responseJson?.message.toLowerCase() === 'validation errors') {
+        Swal.fire('Validation Errors', responseJson.errors.pop(), 'error');
+        return;
+      }
 
-   console.log(responseJson);
+     if(!responseJson.status) {
+       Swal.fire('Internal server error', "Can't register to auto attendance at the moment. Please try again later", 'error');
+       return;
+     }
+
+     Swal.fire('Success', "You've successfully registered to auto attendance!", "success");
+  } catch (e) {
+    isLoading.value = false;
+    Swal.fire('Internal server error.', "Can't register to auto attendance at the moment. Please try again later", "error");
+  }
 }
 </script>
 
@@ -158,72 +194,33 @@ const registerAutoAttendance = async () => {
       </form>
 
       <form @submit.prevent="registerAutoAttendance" v-if="isLoggedIn">
+        <div class="mb-2.5">
+          <SelectGroupOne label="Select User Location" :options="[{id: 1, name: 'Indonesia'}, {id:2, name: 'Malaysia'}]" placeholder="Employee Id. EX: FARD-031" v-model="userGroup" :required="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z" />
+            </svg>
+          </SelectGroupOne>
+        </div>
         <InputGroup label="Employee Id" type="text" placeholder="Employee Id. EX: FARD-031" v-model="employeeId">
-          <svg
-            class="fill-current"
-            width="22"
-            height="22"
-            viewBox="0 0 22 22"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <g opacity="0.5">
-              <path
-                d="M19.2516 3.30005H2.75156C1.58281 3.30005 0.585938 4.26255 0.585938 5.46567V16.6032C0.585938 17.7719 1.54844 18.7688 2.75156 18.7688H19.2516C20.4203 18.7688 21.4172 17.8063 21.4172 16.6032V5.4313C21.4172 4.26255 20.4203 3.30005 19.2516 3.30005ZM19.2516 4.84692C19.2859 4.84692 19.3203 4.84692 19.3547 4.84692L11.0016 10.2094L2.64844 4.84692C2.68281 4.84692 2.71719 4.84692 2.75156 4.84692H19.2516ZM19.2516 17.1532H2.75156C2.40781 17.1532 2.13281 16.8782 2.13281 16.5344V6.35942L10.1766 11.5157C10.4172 11.6875 10.6922 11.7563 10.9672 11.7563C11.2422 11.7563 11.5172 11.6875 11.7578 11.5157L19.8016 6.35942V16.5688C19.8703 16.9125 19.5953 17.1532 19.2516 17.1532Z"
-                fill=""
-              />
-            </g>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
           </svg>
         </InputGroup>
         <InputGroup label="Clock In Location" type="text" placeholder="Enter your clock in location" v-model="clockInLocation">
-          <svg
-            class="fill-current"
-            width="22"
-            height="22"
-            viewBox="0 0 22 22"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <g opacity="0.5">
-              <path
-                d="M19.2516 3.30005H2.75156C1.58281 3.30005 0.585938 4.26255 0.585938 5.46567V16.6032C0.585938 17.7719 1.54844 18.7688 2.75156 18.7688H19.2516C20.4203 18.7688 21.4172 17.8063 21.4172 16.6032V5.4313C21.4172 4.26255 20.4203 3.30005 19.2516 3.30005ZM19.2516 4.84692C19.2859 4.84692 19.3203 4.84692 19.3547 4.84692L11.0016 10.2094L2.64844 4.84692C2.68281 4.84692 2.71719 4.84692 2.75156 4.84692H19.2516ZM19.2516 17.1532H2.75156C2.40781 17.1532 2.13281 16.8782 2.13281 16.5344V6.35942L10.1766 11.5157C10.4172 11.6875 10.6922 11.7563 10.9672 11.7563C11.2422 11.7563 11.5172 11.6875 11.7578 11.5157L19.8016 6.35942V16.5688C19.8703 16.9125 19.5953 17.1532 19.2516 17.1532Z"
-                fill=""
-              />
-            </g>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
           </svg>
         </InputGroup>
-        <InputGroup label="Location Latitude" type="text" placeholder="Enter your email" v-model="latitude">
-          <svg
-            class="fill-current"
-            width="22"
-            height="22"
-            viewBox="0 0 22 22"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <g opacity="0.5">
-              <path
-                d="M19.2516 3.30005H2.75156C1.58281 3.30005 0.585938 4.26255 0.585938 5.46567V16.6032C0.585938 17.7719 1.54844 18.7688 2.75156 18.7688H19.2516C20.4203 18.7688 21.4172 17.8063 21.4172 16.6032V5.4313C21.4172 4.26255 20.4203 3.30005 19.2516 3.30005ZM19.2516 4.84692C19.2859 4.84692 19.3203 4.84692 19.3547 4.84692L11.0016 10.2094L2.64844 4.84692C2.68281 4.84692 2.71719 4.84692 2.75156 4.84692H19.2516ZM19.2516 17.1532H2.75156C2.40781 17.1532 2.13281 16.8782 2.13281 16.5344V6.35942L10.1766 11.5157C10.4172 11.6875 10.6922 11.7563 10.9672 11.7563C11.2422 11.7563 11.5172 11.6875 11.7578 11.5157L19.8016 6.35942V16.5688C19.8703 16.9125 19.5953 17.1532 19.2516 17.1532Z"
-                fill=""
-              />
-            </g>
+        <InputGroup label="Location Latitude" type="text" placeholder="Latitude" v-model="latitude">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" />
           </svg>
         </InputGroup>
-        <InputGroup label="Location Longitude" type="text" placeholder="Enter your email" v-model="longitude">
-          <svg
-            class="fill-current"
-            width="22"
-            height="22"
-            viewBox="0 0 22 22"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <g opacity="0.5">
-              <path
-                d="M19.2516 3.30005H2.75156C1.58281 3.30005 0.585938 4.26255 0.585938 5.46567V16.6032C0.585938 17.7719 1.54844 18.7688 2.75156 18.7688H19.2516C20.4203 18.7688 21.4172 17.8063 21.4172 16.6032V5.4313C21.4172 4.26255 20.4203 3.30005 19.2516 3.30005ZM19.2516 4.84692C19.2859 4.84692 19.3203 4.84692 19.3547 4.84692L11.0016 10.2094L2.64844 4.84692C2.68281 4.84692 2.71719 4.84692 2.75156 4.84692H19.2516ZM19.2516 17.1532H2.75156C2.40781 17.1532 2.13281 16.8782 2.13281 16.5344V6.35942L10.1766 11.5157C10.4172 11.6875 10.6922 11.7563 10.9672 11.7563C11.2422 11.7563 11.5172 11.6875 11.7578 11.5157L19.8016 6.35942V16.5688C19.8703 16.9125 19.5953 17.1532 19.2516 17.1532Z"
-                fill=""
-              />
-            </g>
+        <InputGroup label="Location Longitude" type="text" placeholder="Longitude" v-model="longitude">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" />
           </svg>
         </InputGroup>
 
