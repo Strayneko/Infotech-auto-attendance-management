@@ -3,6 +3,11 @@ const props = defineProps(['label', 'type', 'placeholder', 'tips', 'modelValue']
 defineOptions({
   inheritAttrs: false
 })
+const emit = defineEmits(['update:modelValue'])
+
+const updateValue = (e: Event) => {
+  emit('update:modelValue', (e.target as HTMLInputElement).value)
+};
 </script>
 
 <template>
@@ -15,7 +20,7 @@ defineOptions({
       <input
         v-bind="$attrs"
         :value="modelValue"
-        @input="$emit('update:modelValue', $event.target.value)"
+        @input="updateValue"
         :type="props.type"
         :placeholder="props.placeholder"
         class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary text-black dark:text-white"

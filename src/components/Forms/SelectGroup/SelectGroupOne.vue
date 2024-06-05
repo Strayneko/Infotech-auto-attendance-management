@@ -10,10 +10,9 @@ defineOptions({
 
 const selectedOption = ref<string>('')
 const isOptionSelected = ref<boolean>(false)
-const changeTextColor = (e) => {
-
+const changeTextColor = (e: Event) => {
   isOptionSelected.value = true
-  emit('update:modelValue', e.target.value)
+  emit('update:modelValue', (e.target as HTMLInputElement).value)
 }
 </script>
 
@@ -32,7 +31,6 @@ const changeTextColor = (e) => {
       <select
         v-bind="$attrs"
         :value="modelValue"
-        v-model="selectedOption"
         :class="{ 'text-black dark:text-white': isOptionSelected }"
         @change="changeTextColor"
         class="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent py-3 px-12 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input"
