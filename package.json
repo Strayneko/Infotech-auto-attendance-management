@@ -1,5 +1,5 @@
 {
-  "name": "tailadmin-vue-free",
+  "name": "auto-attendance",
   "version": "1.0.1",
   "private": true,
   "type": "module",
@@ -20,6 +20,7 @@
     "pinia": "^2.1.7",
     "sweetalert2": "^11.11.0",
     "vue": "^3.3.11",
+    "vue-cookies": "^1.8.4",
     "vue-router": "^4.2.5",
     "vue3-apexcharts": "^1.4.4"
   },
