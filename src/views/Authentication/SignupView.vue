@@ -70,6 +70,10 @@ const getAttendanceHistory = async () => {
     })
 
     const responseJson = await response.json();
+    if(!responseJson.status && responseJson?.message?.toLowerCase() === 'validation errors') {
+      Swal.fire('Error', responseJson.errors.pop(), 'error');
+      return;
+    }
     if(!responseJson.status) {
       Swal.fire('Error', responseJson.message, 'error');
       return;
