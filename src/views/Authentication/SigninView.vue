@@ -1,12 +1,69 @@
 <script setup lang="ts">
 import DefaultAuthCard from '@/components/Auths/DefaultAuthCard.vue'
 import InputGroup from '@/components/Auths/InputGroup.vue'
+import { inject, onMounted, ref } from 'vue'
+import Swal from 'sweetalert2'
+import router from '@/router'
+import type { VueCookies } from 'vue-cookies'
+import { sessionHelper } from '@/helpers/sessionHelper'
+
+const email = ref<string>('')
+const employeeId = ref<string>('')
+const isLoading = ref<boolean>(false)
+const token = ref<string | null>(null)
+
+const apiUrl: string = import.meta.env.VITE_AUTO_ATTENDANCE_API_URL;
+const $cookies: any = inject<VueCookies>('$cookies');
+
+onMounted(async () => {
+  const checkSession = await sessionHelper($cookies);
+  if(checkSession) {
+    router.push({ name: 'dashboard' })
+  }
+})
+
+const authenticate = async () => {
+    isLoading.value = true;
+    try {
+      const response = await fetch(`${apiUrl}/user/getUserInfo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.value,
+          employeeId: employeeId.value,
+          type: 'login',
+        })
+      })
+
+      const jsonResponse = await response.json();
+      if(!jsonResponse.status && jsonResponse?.message.toLowerCase() === 'validation errors') {
+        isLoading.value = false;
+        Swal.fire(jsonResponse.message, jsonResponse.errors.join('<br />'), 'error');
+        return;
+      }
+
+      if(!jsonResponse.status) {
+        isLoading.value = false;
+        Swal.fire('Error', jsonResponse.message, 'error');
+        return;
+      }
+
+      isLoading.value = false;
+      $cookies.set('token', jsonResponse.data.token, '1d');
+      router.push({ name: 'dashboard' })
+    } catch (e) {
+      isLoading.value = false;
+      Swal.fire('Internal Server Error', 'Failed to log in. Please try again later', 'error');
+    }
+}
 </script>
 
 <template>
     <DefaultAuthCard subtitle="Start for free" title="Sign In">
-      <form class="bg-red-500">
-        <InputGroup label="Email" type="email" placeholder="Enter your email">
+      <form class="bg-red-500" @submit.prevent="authenticate">
+        <InputGroup label="Email" type="email" :required="true" placeholder="Enter your email" v-model="email">
           <svg
             class="fill-current"
             width="22"
@@ -24,7 +81,7 @@ import InputGroup from '@/components/Auths/InputGroup.vue'
           </svg>
         </InputGroup>
 
-        <InputGroup label="Employee Id" type="text" placeholder="Employee Id. Ex:FARD999">
+        <InputGroup label="Employee Id" type="text" placeholder="Employee Id. Ex:FARD999" :required="true" v-model="employeeId">
           <svg
             class="fill-current"
             width="22"
@@ -47,11 +104,17 @@ import InputGroup from '@/components/Auths/InputGroup.vue'
         </InputGroup>
 
         <div class="mb-5 mt-6">
-          <input
+          <button
             type="submit"
-            value="Sign In"
-            class="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 font-medium text-white transition hover:bg-opacity-90"
-          />
+            :disabled="isLoading"
+            class="w-full flex items-center justify-center gap-2 cursor-pointer rounded-lg border border-primary bg-primary p-4 font-medium text-white transition disabled:bg-opacity-90 disabled:cursor-not-allowed hover:bg-opacity-90"
+          >
+            <svg v-if="isLoading" aria-hidden="true" class="w-4 h-4 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+              <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
+            </svg>
+            <span v-text="isLoading ? 'Loading' : 'Sign in'"></span>
+          </button>
         </div>
 
         <div class="mt-6 text-center">

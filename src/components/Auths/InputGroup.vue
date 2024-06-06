@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps(['label', 'type', 'placeholder', 'tips', 'modelValue'])
+const props = defineProps(['label', 'type', 'placeholder', 'tips', 'modelValue', 'required'])
 defineOptions({
   inheritAttrs: false
 })
@@ -12,12 +12,15 @@ const updateValue = (e: Event) => {
 
 <template>
   <div class="mb-4">
-    <label class="block font-medium text-black dark:text-white" :class="!tips ? 'mb-2.5' : ''">{{ props.label }}</label>
+    <label class="block font-medium text-black dark:text-white" :class="!tips ? 'mb-2.5' : ''">{{ props.label }}
+      <span v-if="required" class="text-red">*</span>
+    </label>
     <span v-if="tips" class="mb-2.5 inline-block">
       {{ tips }}
     </span>
     <div class="relative">
       <input
+        :required="required"
         v-bind="$attrs"
         :value="modelValue"
         @input="updateValue"

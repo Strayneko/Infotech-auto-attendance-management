@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import DefaultAuthCard from '@/components/Auths/DefaultAuthCard.vue'
 import InputGroup from '@/components/Auths/InputGroup.vue'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import Swal from 'sweetalert2';
 import SelectGroupOne from '@/components/Forms/SelectGroup/SelectGroupOne.vue'
+import { sessionHelper } from '@/helpers/sessionHelper'
+import router from '@/router'
 
 const isLoading = ref(false);
 const isLoggedIn = ref(false);
@@ -21,6 +23,13 @@ const isImmediate = ref<boolean | null>(null)
 const isSubscribeMail = ref<boolean | null>(null)
 
 const apiUrl = import.meta.env.VITE_AUTO_ATTENDANCE_API_URL;
+
+onMounted(async () => {
+  const checkSession = await sessionHelper();
+  if(checkSession) {
+    router.push({ name: 'dashboard' })
+  }
+})
 
 const authenticate = async () => {
   isLoading.value = true;
