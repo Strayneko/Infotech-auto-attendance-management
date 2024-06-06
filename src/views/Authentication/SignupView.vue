@@ -36,6 +36,11 @@ const authenticate = async () => {
     })
 
     const jsonResponse = await response.json();
+    if(!jsonResponse.status && jsonResponse?.message.toLowerCase() === 'validation errors') {
+      Swal.fire(jsonResponse.message, jsonResponse.errors.join('<br />'), 'error');
+      return;
+    }
+
     if(!jsonResponse.status) {
       isLoading.value = false;
       Swal.fire('Error', jsonResponse.message, 'error');
@@ -120,7 +125,7 @@ const registerAutoAttendance = async () => {
      const responseJson = await response.json();
      isLoading.value = false;
       if(!responseJson.status && responseJson?.message.toLowerCase() === 'validation errors') {
-        Swal.fire('Validation Errors', responseJson.errors.pop(), 'error');
+        Swal.fire('Validation Errors', responseJson.errors.join('<br />'), 'error');
         return;
       }
 
