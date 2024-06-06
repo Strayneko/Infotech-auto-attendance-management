@@ -37,14 +37,15 @@ const authenticate = async () => {
 
     const jsonResponse = await response.json();
     if(!jsonResponse.status) {
+      isLoading.value = false;
       Swal.fire('Error', jsonResponse.message, 'error');
+      return;
     }
-
-    isLoading.value = false;
 
     responseData.value = jsonResponse;
     employeeId.value = jsonResponse.data.employeeId;
     await getAttendanceHistory();
+    isLoading.value = false;
   } catch (e) {
     isLoading.value = false;
     Swal.fire('Internal Server Error', 'Failed to log in into infotech server. Please try again later', 'error');
@@ -70,10 +71,6 @@ const getAttendanceHistory = async () => {
     })
 
     const responseJson = await response.json();
-    if(!responseJson.status && responseJson?.message?.toLowerCase() === 'validation errors') {
-      Swal.fire('Error', responseJson.errors.pop(), 'error');
-      return;
-    }
     if(!responseJson.status) {
       Swal.fire('Error', responseJson.message, 'error');
       return;
