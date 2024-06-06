@@ -12,11 +12,12 @@ import ProfileView from '@/views/ProfileView.vue'
 import TablesView from '@/views/TablesView.vue'
 import AlertsView from '@/views/UiElements/AlertsView.vue'
 import ButtonsView from '@/views/UiElements/ButtonsView.vue'
+import NotFoundView from '@/views/NotFoundView.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'eCommerce',
+    name: 'dashboard',
     component: ECommerceView,
     meta: {
       title: 'eCommerce Dashboard'
@@ -109,6 +110,14 @@ const routes = [
     meta: {
       title: 'Signup'
     }
+  },
+  {
+    path: '/:notFound',
+    name: 'pageNotFound',
+    component: NotFoundView,
+    meta: {
+      title: 'Signup'
+    },
   }
 ]
 
@@ -121,7 +130,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  document.title = `Vue.js ${to.meta.title} | TailAdmin - Vue.js Tailwind CSS Dashboard Template`
+  document.title = `${to.meta.title} | Auto Attendance`
   next()
 })
 
