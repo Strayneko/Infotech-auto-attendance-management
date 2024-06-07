@@ -166,7 +166,8 @@ const registerAutoAttendance = async () => {
        return;
      }
 
-     Swal.fire('Success', "You've successfully registered to auto attendance!", "success");
+     Swal.fire('Success', "You've successfully registered to auto attendance!. You'll be redirected in 5 seconds.", "success");
+     setTimeout(() => { router.push({ name: 'signin' }) }, 5000);
   } catch (e) {
     isLoading.value = false;
     Swal.fire('Internal server error.', "Can't register to auto attendance at the moment. Please try again later", "error");

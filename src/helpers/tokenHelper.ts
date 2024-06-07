@@ -3,7 +3,7 @@ export const tokenHelper = async (path: string, requestTime: string, body: strin
   const host = window.location.hostname;
   const userAgent = navigator.userAgent;
   const tokenFormula =
-    host +
+    'autoattendance.my.id' +
     '/api' +
     path +
     userAgent +
@@ -11,8 +11,6 @@ export const tokenHelper = async (path: string, requestTime: string, body: strin
     initialVector +
     body;
 
-  console.log(tokenFormula);
   const token = await encryptionHelper(tokenFormula);
-  console.log(token);
   return token;
 }
