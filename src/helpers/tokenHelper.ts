@@ -10,5 +10,7 @@ export const tokenHelper = async (path: string, requestTime: string, body: strin
     requestTime +
     initialVector +
     body;
+
+  console.log(tokenFormula);
   return await encryptionHelper(tokenFormula);
 }
