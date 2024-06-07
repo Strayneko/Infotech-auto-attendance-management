@@ -1,5 +1,6 @@
 import { inject } from 'vue'
 import type { VueCookies } from 'vue-cookies'
+import { tokenHelper } from '@/helpers/tokenHelper'
 
 /**
  * Validate token in the cookies
@@ -15,14 +16,20 @@ export const sessionHelper = async ($cookies: any = null) => {
     const token = $cookies.get('token');
     if (token === null) return null;
 
-    const response = await fetch(`${apiUrl}/user/me`, {
+    const path = '/user/me';
+    const reqTime = Date.now().toString();
+    const body = JSON.stringify({
+      token,
+    });
+    const appToken = await tokenHelper(path, reqTime, body);
+    const response = await fetch(`${apiUrl}${path}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token,
-      })
+        'X-App-Token': appToken,
+        'X-Request-Time': reqTime,
+      } as any,
+      body,
     })
 
     const responseJson = await response.json()

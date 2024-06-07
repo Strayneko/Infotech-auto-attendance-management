@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import SelectGroupOne from '@/components/Forms/SelectGroup/SelectGroupOne.vue'
 import { sessionHelper } from '@/helpers/sessionHelper'
 import router from '@/router'
+import { tokenHelper } from '@/helpers/tokenHelper'
 
 const isLoading = ref(false);
 const isLoggedIn = ref(false);
@@ -34,16 +35,22 @@ onMounted(async () => {
 const authenticate = async () => {
   isLoading.value = true;
   try {
-    const response = await fetch(`${apiUrl}/user/getUserInfo`, {
+    const path = '/user/getUserInfo';
+    const reqTime = Date.now().toString();
+    const body = JSON.stringify({
+      email: email.value,
+      password: password.value,
+      type: 'get',
+    });
+    const token = await tokenHelper(path, reqTime, body);
+    const response = await fetch(`${apiUrl}${path}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: email.value,
-        password: password.value,
-        type: 'get',
-      })
+        'X-Request-Time': reqTime,
+        'X-App-Token': token,
+      } as any,
+      body,
     })
 
     const jsonResponse = await response.json();
@@ -72,19 +79,25 @@ const authenticate = async () => {
 
 const getAttendanceHistory = async () => {
   try {
-    const response = await fetch(`${apiUrl}/attendance/history?getLast=1`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const path = '/attendance/history';
+    const reqTime = Date.now().toString();
+    const body = JSON.stringify({
         companyId: responseData.value.data.companyId,
         employeeId: responseData.value.data.employeeId,
         customerId: responseData.value.data.customerId,
         email: responseData.value.data.email,
         token: responseData.value.data.token,
         imei: responseData.value.data.imei,
-      }),
+      });
+    const appToken = await tokenHelper(path, reqTime, body);
+    const response = await fetch(`${apiUrl}${path}?getLast=1`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-App-Token': appToken,
+        'X-Request-Time': reqTime,
+      } as any,
+      body,
     })
 
     const responseJson = await response.json();
@@ -105,35 +118,40 @@ const getAttendanceHistory = async () => {
 
 const registerAutoAttendance = async () => {
   isLoading.value = true;
-  console.log(userGroup.value)
   try {
-     const response = await fetch(`${apiUrl}/user/storeUserInfo`, {
+     const body = JSON.stringify({
+         email: email.value,
+         imei: responseData.value.data.imei,
+         deviceId: responseData.value.data.deviceId,
+         customerId: responseData.value.data.customerId.toString(),
+         idNumber: responseData.value.data.idNumber,
+         token: responseData.value.data.token,
+         infotechUserId: responseData.value.data.infotechUserId,
+         companyId: responseData.value.data.companyId,
+         employeeId: employeeId.value,
+         userGroupId: userGroup.value || null,
+         attendanceData: {
+           locationName: clockInLocation.value,
+           latitude: latitude.value,
+           longitude: longitude.value,
+           timeZone: "25200",
+           isActive: 1,
+           remarks: '',
+           isImmediate: isImmediate.value,
+           isSubscribeMail: isSubscribeMail.value,
+         }
+       });
+     const reqTime = Date.now().toString();
+     const path = '/user/storeUserInfo';
+     const appToken = await tokenHelper(path, reqTime, body);
+     const response = await fetch(`${apiUrl}${path}`, {
        method: 'POST',
        headers: {
          'Content-Type': 'application/json',
-       },
-       body: JSON.stringify({
-            email: email.value,
-            imei: responseData.value.data.imei,
-            deviceId: responseData.value.data.deviceId,
-            customerId: responseData.value.data.customerId.toString(),
-            idNumber: responseData.value.data.idNumber,
-            token: responseData.value.data.token,
-            infotechUserId: responseData.value.data.infotechUserId,
-            companyId: responseData.value.data.companyId,
-            employeeId: employeeId.value,
-            userGroupId: userGroup.value || null,
-            attendanceData: {
-              locationName: clockInLocation.value,
-              latitude: latitude.value,
-              longitude: longitude.value,
-              timeZone: "25200",
-              isActive: 1,
-              remarks: '',
-              isImmediate: isImmediate.value,
-              isSubscribeMail: isSubscribeMail.value,
-            }
-       }),
+         'X-Request-Time': reqTime,
+         'X-App-Token': appToken,
+       } as any,
+       body,
      });
 
      const responseJson = await response.json();
@@ -144,7 +162,7 @@ const registerAutoAttendance = async () => {
       }
 
      if(!responseJson.status) {
-       Swal.fire('Internal server error', "Can't register to auto attendance at the moment. Please try again later", 'error');
+       Swal.fire('Error', responseJson.message, 'error');
        return;
      }
 

@@ -6,6 +6,7 @@ import Swal from 'sweetalert2'
 import router from '@/router'
 import type { VueCookies } from 'vue-cookies'
 import { sessionHelper } from '@/helpers/sessionHelper'
+import { tokenHelper } from '@/helpers/tokenHelper'
 
 const email = ref<string>('')
 const employeeId = ref<string>('')
@@ -25,16 +26,22 @@ onMounted(async () => {
 const authenticate = async () => {
     isLoading.value = true;
     try {
-      const response = await fetch(`${apiUrl}/user/getUserInfo`, {
+      const reqTime = Date.now().toString();
+      const body = JSON.stringify({
+        email: email.value,
+        employeeId: employeeId.value,
+        type: 'login',
+      });
+      const path = '/user/getUserInfo';
+      const appToken = await tokenHelper(path, reqTime, body)
+      const response = await fetch(`${apiUrl}${path}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email.value,
-          employeeId: employeeId.value,
-          type: 'login',
-        })
+          'X-App-Token': appToken,
+          'X-Request-Time': reqTime,
+        } as any,
+        body,
       })
 
       const jsonResponse = await response.json();
