@@ -1,6 +1,23 @@
 <script setup lang="ts">
 import HeaderArea from '@/components/Header/HeaderArea.vue'
 import SidebarArea from '@/components/Sidebar/SidebarArea.vue'
+import { useSessionStore } from '@/stores/session'
+import { onMounted } from 'vue'
+import { sessionHelper } from '@/helpers/sessionHelper'
+import router from '@/router'
+
+const sessionStore = useSessionStore()
+
+onMounted(async () => {
+  const checkSession = await sessionHelper();
+  if (!checkSession) {
+    await router.push({ name: 'signin' });
+    return;
+  }
+
+  sessionStore.setUserData(checkSession);
+  sessionStore.setIsLoggedIn(true);
+})
 </script>
 
 <template>
