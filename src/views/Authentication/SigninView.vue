@@ -58,7 +58,7 @@ const authenticate = async () => {
       }
 
       isLoading.value = false;
-      $cookies.set('token', jsonResponse.data.token, '1d');
+      $cookies.set('token', jsonResponse.data.userToken, '1d');
       router.push({ name: 'dashboard' })
     } catch (e) {
       isLoading.value = false;
