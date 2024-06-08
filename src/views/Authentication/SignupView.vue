@@ -130,6 +130,7 @@ const registerAutoAttendance = async () => {
          companyId: responseData.value.data.companyId,
          employeeId: employeeId.value,
          userGroupId: userGroup.value || null,
+         userToken: responseData.value.data.userToken,
          attendanceData: {
            locationName: clockInLocation.value,
            latitude: latitude.value,
