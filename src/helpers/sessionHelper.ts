@@ -13,13 +13,13 @@ export const sessionHelper = async ($cookies: any = null) => {
 
   try {
     const apiUrl: string = import.meta.env.VITE_AUTO_ATTENDANCE_API_URL;
-    const token = $cookies.get('token');
-    if (token === null) return null;
+    const userToken = $cookies.get('token');
+    if (userToken === null) return null;
 
     const path = '/user/me';
     const reqTime = Date.now().toString();
     const body = JSON.stringify({
-      token,
+      userToken,
     });
     const appToken = await tokenHelper(path, reqTime, body);
     const response = await fetch(`${apiUrl}${path}`, {
