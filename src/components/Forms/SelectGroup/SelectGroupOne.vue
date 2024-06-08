@@ -38,8 +38,8 @@ const changeTextColor = (e: Event) => {
         @change="changeTextColor"
         class="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent py-3 px-12 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input"
       >
-        <option value="" selected disabled>{{ defaultSelect }}</option>
-        <option v-for="option of options" :value="option.id" v-text="option.name" :key="option.id"></option>
+        <option value="" selected disabled v-if="defaultSelect">{{ defaultSelect }}</option>
+        <option v-for="option of options" :value="option.id" v-text="option.name" :key="option.id" :selected="option.id == modelValue"></option>
       </select>
       <span class="absolute top-1/2 right-4 z-10 -translate-y-1/2">
         <svg
