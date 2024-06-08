@@ -5,7 +5,7 @@ import SignupView from '@/views/Authentication/SignupView.vue'
 import CalendarView from '@/views/CalendarView.vue'
 import BasicChartView from '@/views/Charts/BasicChartView.vue'
 import ECommerceView from '@/views/Dashboard/ECommerceView.vue'
-import FormElementsView from '@/views/Forms/FormElementsView.vue'
+import FormElementsView from '@/views/Attendance/AttendanceHistoryView.vue'
 import FormLayoutView from '@/views/Forms/FormLayoutView.vue'
 import SettingsView from '@/views/Pages/SettingsView.vue'
 import ProfileView from '@/views/ProfileView.vue'
@@ -13,6 +13,7 @@ import TablesView from '@/views/TablesView.vue'
 import AlertsView from '@/views/UiElements/AlertsView.vue'
 import ButtonsView from '@/views/UiElements/ButtonsView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
+import AttendanceHistoryView from '@/views/Attendance/AttendanceHistoryView.vue'
 
 const routes = [
   {
@@ -40,11 +41,11 @@ const routes = [
     }
   },
   {
-    path: '/forms/form-elements',
+    path: '/attendance/history',
     name: 'formElements',
-    component: FormElementsView,
+    component: AttendanceHistoryView,
     meta: {
-      title: 'Form Elements'
+      title: 'Attendance History'
     }
   },
   {
