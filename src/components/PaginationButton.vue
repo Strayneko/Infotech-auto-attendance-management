@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
+
 const props = defineProps(['currentPage', 'hasNext', 'hasPrevious', 'totalPage']);
 const emit = defineEmits(['paginationPageChanged']);
 
@@ -14,6 +16,25 @@ const prevPage = () => {
 const jumpPage = (page: number) => {
   if (props.totalPage < page || page > props.totalPage) return;
   emit('paginationPageChanged', page);
+}
+
+const paginate = (current_page: number, last_page: number, onSides = 3) => {
+  // pages
+  let pages = [];
+  // Loop through
+  for (let i = 1; i <= last_page; i++) {
+    // Define offset
+    let offset = (i == 1 || last_page) ? onSides + 1 : onSides;
+
+    // If added
+    if (i == 1 || (current_page - offset <= i && current_page + offset >= i) ||
+      i == current_page || i == last_page) {
+      pages.push(i);
+    } else if (i == current_page - (offset + 1) || i == current_page + (offset + 1)) {
+      pages.push('...');
+    }
+  }
+  return pages;
 }
 </script>
 
@@ -42,12 +63,21 @@ const jumpPage = (page: number) => {
           </svg>
         </button>
       </li>
-      <li v-for="item in totalPage" :key="item">
+      <li v-for="item in paginate(currentPage, totalPage, 1)" :key="item">
         <button
+          v-if="Number.isInteger(item)"
           aria-current="page"
-          @click.prevent="jumpPage(item)"
+          @click.prevent="jumpPage(+item)"
           class="router-link-active router-link-exact-active flex items-center justify-center border border-stroke border-l-transparent py-[5px] px-4 font-medium hover:border-primary disabled:bg-gray hover:bg-gray hover:text-primary dark:border-strokedark dark:hover:border-primary dark:hover:bg-graydark"
           :disabled="item == currentPage"
+        >
+          {{ item }}
+        </button>
+        <button
+          v-else
+          aria-current="page"
+          class="router-link-active router-link-exact-active flex items-center justify-center border border-stroke border-l-transparent py-[5px] px-4 font-medium hover:border-primary hover:bg-gray hover:text-primary dark:border-strokedark dark:hover:border-primary dark:hover:bg-graydark"
+          disabled
         >
           {{ item }}
         </button>

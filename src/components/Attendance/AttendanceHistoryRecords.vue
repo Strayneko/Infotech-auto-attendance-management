@@ -14,7 +14,7 @@ const { checkIsLoggedIn, getUserData } = useSessionStore();
 const histories = ref<PaginatedItems>();
 const page = ref<number>(1);
 const selectPerPage = ref<number>(5);
-
+const isLoading = ref<boolean>(false);
 const formatDate = (dateString: string) => {
   const momentInstance = moment(dateString);
   const date = momentInstance.format('DD-MMM-YYYY');
@@ -53,7 +53,6 @@ const fetchHistories = async () => {
   });
 
   const jsonResponse = await response.json();
-
   if(!jsonResponse.status) {
     Swal.fire('Error', jsonResponse.message, 'error');
     return;
@@ -71,8 +70,10 @@ onMounted(async () => {
       await router.push({ name: 'signin' });
       return;
     }
+    isLoading.value = true;
 
     await fetchHistories();
+    isLoading.value = false;
 })
 </script>
 
@@ -101,27 +102,37 @@ onMounted(async () => {
         </tr>
         </thead>
         <tbody>
-        <tr v-for="(item, index) in histories?.items" :key="index">
-          <td class="py-5 px-4 pl-5 xl:pl-11">
-            <p class="text-sm">{{ ((histories?.currentPage || 1) - 1) * (histories?.pageSize || 1) + index + 1  }}</p>
-          </td>
-          <td class="py-5 px-4">
-            <p class="rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium">{{ formatDate(item.ClockTimeD).date }}</p>
-            <p class="rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium">{{ formatDate(item.ClockTimeD).time }}</p>
-          </td>
-          <td class="py-5 px-4">
-            <p
-              class="inline-flex rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium"
-            >
-              {{ item.LocationNameC }}
-            </p>
-          </td>
-          <td class="py-5 px-4">
-            <p
-              class="inline-flex rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium"
-            >
-              {{ item.Remarks || '-' }}
-            </p>
+        <template v-if="!isLoading">
+          <tr v-for="(item, index) in histories?.items" :key="index">
+            <td class="py-5 px-4 pl-5 xl:pl-11">
+              <p class="text-sm">{{ ((histories?.currentPage || 1) - 1) * (histories?.pageSize || 1) + index + 1  }}</p>
+            </td>
+            <td class="py-5 px-4">
+              <p class="rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium">{{ formatDate(item.ClockTimeD).date }}</p>
+              <p class="rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium">{{ formatDate(item.ClockTimeD).time }}</p>
+            </td>
+            <td class="py-5 px-4">
+              <p
+                class="inline-flex rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium"
+              >
+                {{ item.LocationNameC }}
+              </p>
+            </td>
+            <td class="py-5 px-4">
+              <p
+                class="inline-flex rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium"
+              >
+                {{ item.Remarks || '-' }}
+              </p>
+            </td>
+          </tr>
+        </template>
+        <tr v-if="isLoading">
+          <td class="py-5 px-4 pl-5 text-center xl:pl-11" colspan="4">
+            <svg class="h-10 w-10 mx-auto animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
           </td>
         </tr>
         </tbody>
