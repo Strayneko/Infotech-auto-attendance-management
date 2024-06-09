@@ -66,6 +66,7 @@ watch([selectPerPage, page], async () => {
 })
 
 onMounted(async () => {
+    const userData: UserInfoType = await getUserData();
     if(!checkIsLoggedIn() && Object.keys(userData).length === 0) {
       await router.push({ name: 'signin' });
       return;
