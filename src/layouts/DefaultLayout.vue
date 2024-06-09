@@ -15,8 +15,8 @@ onMounted(async () => {
     return;
   }
 
-  sessionStore.setUserData(checkSession);
   sessionStore.setIsLoggedIn(true);
+  await sessionStore.setUserData(checkSession);
 })
 </script>
 

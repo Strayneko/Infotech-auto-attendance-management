@@ -26,9 +26,9 @@ const formatDate = (dateString: string) => {
 const handlePaginationChange = (targetPage: number) => {
   page.value = targetPage;
 }
-const userData: UserInfoType = getUserData();
 
 const fetchHistories = async () => {
+  const userData: UserInfoType = await getUserData();
   const apiUrl: string = import.meta.env.VITE_AUTO_ATTENDANCE_API_URL;
   const path = '/attendance/history';
   const reqTime = Date.now().toString();
