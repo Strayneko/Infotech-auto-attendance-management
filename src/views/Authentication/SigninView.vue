@@ -7,17 +7,19 @@ import router from '@/router'
 import type { VueCookies } from 'vue-cookies'
 import { sessionHelper } from '@/helpers/sessionHelper'
 import { tokenHelper } from '@/helpers/tokenHelper'
+import { useSessionStore } from '@/stores/session'
 
 const email = ref<string>('')
 const appPassword = ref<string>('')
 const isLoading = ref<boolean>(false)
 const apiUrl: string = import.meta.env.VITE_AUTO_ATTENDANCE_API_URL;
 const $cookies: any = inject<VueCookies>('$cookies');
+const sessionStore = useSessionStore();
 
 onMounted(async () => {
   const checkSession = await sessionHelper($cookies);
   if(checkSession) {
-    router.push({ name: 'dashboard' })
+    await router.push({ name: 'dashboard' })
   }
 })
 
@@ -58,7 +60,10 @@ const authenticate = async () => {
       isLoading.value = false;
       $cookies.set('token', jsonResponse.data.userToken, '1d');
 
-      router.push({ name: 'dashboard' })
+      sessionStore.setIsLoggedIn(true);
+      await sessionStore.setUserData(jsonResponse.data);
+
+      await router.push({ name: 'dashboard' })
     } catch (e) {
       isLoading.value = false;
       Swal.fire('Internal Server Error', 'Failed to log in. Please try again later', 'error');

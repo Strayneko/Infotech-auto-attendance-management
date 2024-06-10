@@ -14,9 +14,6 @@ onMounted(async () => {
     await router.push({ name: 'signin' });
     return;
   }
-
-  sessionStore.setIsLoggedIn(true);
-  await sessionStore.setUserData(checkSession);
 })
 </script>
 
