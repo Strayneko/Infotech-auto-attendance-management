@@ -26,7 +26,7 @@ const updateValue = (e: Event) => {
         @input="updateValue"
         :type="props.type"
         :placeholder="props.placeholder"
-        class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary text-black dark:text-white"
+        class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary text-black dark:text-white disabled:bg-gray disabled:cursor-not-allowed"
       />
 
       <span class="absolute right-4 top-4">
