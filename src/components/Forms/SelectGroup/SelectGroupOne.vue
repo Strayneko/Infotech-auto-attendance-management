@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { ref, defineProps, defineEmits } from 'vue'
 
-const props = defineProps(['options', 'modelValue', 'label', 'required', 'defaultSelect', 'tips']);
+const props = defineProps(['options', 'modelValue', 'label', 'required', 'defaultSelect', 'tips', 'optionText']);
 const emit = defineEmits(['update:modelValue']);
 
 defineOptions({
   inheritAttrs: false
 });
 
-const selectedOption = ref<string>('')
 const isOptionSelected = ref<boolean>(false)
 const changeTextColor = (e: Event) => {
   isOptionSelected.value = true
@@ -39,7 +38,7 @@ const changeTextColor = (e: Event) => {
         class="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent py-3 px-12 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input"
       >
         <option value="" selected disabled v-if="defaultSelect">{{ defaultSelect }}</option>
-        <option v-for="option of options" :value="option.id" v-text="option.name" :key="option.id" :selected="option.id == modelValue"></option>
+        <option v-for="option of options" :value="option.id" v-text="option[optionText || 'name']" :key="option.id" :selected="option.id == modelValue"></option>
       </select>
       <span class="absolute top-1/2 right-4 z-10 -translate-y-1/2">
         <svg
