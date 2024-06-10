@@ -1,20 +1,23 @@
 <script setup lang="ts">
 import DefaultAuthCard from '@/components/Auths/DefaultAuthCard.vue'
 import InputGroup from '@/components/Auths/InputGroup.vue'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import Swal from 'sweetalert2';
 import SelectGroupOne from '@/components/Forms/SelectGroup/SelectGroupOne.vue'
 import { sessionHelper } from '@/helpers/sessionHelper'
 import router from '@/router'
 import { tokenHelper } from '@/helpers/tokenHelper'
+import type { LocationHistoryType } from '@/types/location-history-type'
 
 const isLoading = ref(false);
 const isLoggedIn = ref(false);
 const email = ref('');
 const password = ref('');
 const responseData: any = ref(null);
-const attendanceData: any = ref(null);
 const userGroup = ref(null);
+const appPassword = ref<string>('');
+const attendanceLocation = ref<number>(1);
+const attendanceLocationHistories = ref<LocationHistoryType[]>([]);
 
 const employeeId = ref('');
 const latitude = ref('');
@@ -31,6 +34,17 @@ onMounted(async () => {
     router.push({ name: 'dashboard' })
   }
 })
+
+watch(attendanceLocation, () => {
+  if (attendanceLocationHistories.value.length === 0) return;
+
+  const locationDetails = attendanceLocationHistories.value.find((location: LocationHistoryType) => location.id == attendanceLocation.value);
+  if(!locationDetails) return;
+
+  latitude.value = locationDetails.latitude;
+  longitude.value = locationDetails.longitude;
+  clockInLocation.value = locationDetails.locationName;
+});
 
 const authenticate = async () => {
   isLoading.value = true;
@@ -68,7 +82,7 @@ const authenticate = async () => {
 
     responseData.value = jsonResponse;
     employeeId.value = jsonResponse.data.employeeId;
-    await getAttendanceHistory();
+    await getAttendanceLocationHistory();
     isLoading.value = false;
   } catch (e) {
     isLoading.value = false;
@@ -76,10 +90,9 @@ const authenticate = async () => {
   }
 }
 
-
-const getAttendanceHistory = async () => {
+const getAttendanceLocationHistory = async () => {
   try {
-    const path = '/attendance/history';
+    const path = '/attendance/location';
     const reqTime = Date.now().toString();
     const body = JSON.stringify({
         companyId: responseData.value.data.companyId,
@@ -106,15 +119,18 @@ const getAttendanceHistory = async () => {
       return;
     }
 
-    attendanceData.value = responseJson
-    latitude.value = responseJson.data.LatN;
-    longitude.value = responseJson.data.LngN;
-    clockInLocation.value = responseJson.data.LocationNameC;
+    attendanceLocationHistories.value = responseJson.data;
+    if (attendanceLocationHistories.value.length > 0) {
+      latitude.value = attendanceLocationHistories.value[0].latitude;
+      longitude.value = attendanceLocationHistories.value[0].longitude;
+      clockInLocation.value = attendanceLocationHistories.value[0].locationName;
+    }
     isLoggedIn.value = true;
   } catch (e) {
-    Swal.fire('Internal server error', "Can't fetch user information. Please try again later", "error");
+    Swal.fire('Internal server error', "Can't fetch location history. Please try again later", "error");
   }
 }
+
 
 const registerAutoAttendance = async () => {
   isLoading.value = true;
@@ -131,6 +147,7 @@ const registerAutoAttendance = async () => {
          employeeId: employeeId.value,
          userGroupId: userGroup.value || null,
          userToken: responseData.value.data.userToken,
+         appPassword: appPassword.value,
          attendanceData: {
            locationName: clockInLocation.value,
            latitude: latitude.value,
@@ -238,7 +255,6 @@ const registerAutoAttendance = async () => {
         <div class="mb-2.5">
           <SelectGroupOne label="Select User Location"
                           :options="[{id: 1, name: 'Indonesia'}, {id:2, name: 'Malaysia'}]"
-                          placeholder="Employee Id. EX: FARD-031"
                           v-model="userGroup"
                           :required="true"
                           default-select="Select Country"
@@ -254,27 +270,46 @@ const registerAutoAttendance = async () => {
             <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
           </svg>
         </InputGroup>
-        <InputGroup label="Clock In Location" type="text" placeholder="Enter your clock in location" v-model="clockInLocation">
+        <div class="mb-2.5">
+          <SelectGroupOne label="Select Attendance Location"
+                          :options="attendanceLocationHistories"
+                          v-model="attendanceLocation"
+                          :required="true"
+                          default-select="Select Attendance Location"
+                          option-text="locationName"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z" />
+            </svg>
+          </SelectGroupOne>
+        </div>
+        <InputGroup label="Clock In Location" type="text" placeholder="Enter your clock in location" v-model="clockInLocation" disabled>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
           </svg>
         </InputGroup>
-        <InputGroup label="Location Latitude" type="text" placeholder="Latitude" v-model="latitude">
+        <InputGroup label="Location Latitude" type="text" placeholder="Latitude" v-model="latitude" disabled>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" />
           </svg>
         </InputGroup>
-        <InputGroup label="Location Longitude" type="text" placeholder="Longitude" v-model="longitude">
+        <InputGroup label="Location Longitude" type="text" placeholder="Longitude" v-model="longitude" disabled>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" />
+          </svg>
+        </InputGroup>
+
+        <InputGroup label="App Password" type="password" placeholder="App Password" v-model="appPassword" tips="*Please use a different password from your infotech account.">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
           </svg>
         </InputGroup>
 
         <div class="space-y-2.5">
           <SelectGroupOne label="Activate email notification ?"
                           :options="[{id: 1, name: 'Yes'}, {id:0, name: 'No'}]"
-                          placeholder="Employee Id. EX: FARD-031"
                           v-model="isSubscribeMail"
                           :required="true"
                           default-select="Select Options"
@@ -286,7 +321,6 @@ const registerAutoAttendance = async () => {
 
           <SelectGroupOne label="Immediate clock in/clock out ?"
                           :options="[{id: 1, name: 'Yes'}, {id:0, name: 'No'}]"
-                          placeholder="Employee Id. EX: FARD-031"
                           v-model="isImmediate"
                           :required="true"
                           default-select="Select Options"
