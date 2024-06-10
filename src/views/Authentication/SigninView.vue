@@ -9,10 +9,8 @@ import { sessionHelper } from '@/helpers/sessionHelper'
 import { tokenHelper } from '@/helpers/tokenHelper'
 
 const email = ref<string>('')
-const employeeId = ref<string>('')
+const appPassword = ref<string>('')
 const isLoading = ref<boolean>(false)
-const token = ref<string | null>(null)
-
 const apiUrl: string = import.meta.env.VITE_AUTO_ATTENDANCE_API_URL;
 const $cookies: any = inject<VueCookies>('$cookies');
 
@@ -29,7 +27,7 @@ const authenticate = async () => {
       const reqTime = Date.now().toString();
       const body = JSON.stringify({
         email: email.value,
-        employeeId: employeeId.value,
+        appPassword: appPassword.value,
         type: 'login',
       });
       const path = '/user/getUserInfo';
@@ -89,7 +87,7 @@ const authenticate = async () => {
           </svg>
         </InputGroup>
 
-        <InputGroup label="Employee Id" type="text" placeholder="Employee Id. Ex:FARD999" :required="true" v-model="employeeId">
+        <InputGroup label="App Password" type="password" placeholder="Input Your App Password" :required="true" v-model="appPassword">
           <svg
             class="fill-current"
             width="22"
