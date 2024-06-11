@@ -5,7 +5,6 @@ import SignupView from '@/views/Authentication/SignupView.vue'
 import CalendarView from '@/views/CalendarView.vue'
 import BasicChartView from '@/views/Charts/BasicChartView.vue'
 import DashboardView from '@/views/Dashboard/DashboardView.vue'
-import FormLayoutView from '@/views/Forms/FormLayoutView.vue'
 import SettingsView from '@/views/Pages/SettingsView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import TablesView from '@/views/TablesView.vue'
@@ -13,6 +12,7 @@ import AlertsView from '@/views/UiElements/AlertsView.vue'
 import ButtonsView from '@/views/UiElements/ButtonsView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import AttendanceHistoryView from '@/views/Attendance/AttendanceHistoryView.vue'
+import ChangeLocationView from '@/views/Attendance/ChangeLocationView.vue'
 
 const routes = [
   {
@@ -48,11 +48,11 @@ const routes = [
     }
   },
   {
-    path: '/forms/form-layout',
-    name: 'formLayout',
-    component: FormLayoutView,
+    path: '/attendance/change-location',
+    name: 'changeLocation',
+    component: ChangeLocationView,
     meta: {
-      title: 'Form Layout'
+      title: 'Change Attendance Location'
     }
   },
   {
