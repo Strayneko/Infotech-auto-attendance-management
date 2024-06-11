@@ -1,3 +1,5 @@
+import type { AttendanceDataType } from '@/types/attendance-data-type'
+
 export type UserInfoType = {
   id?: number;
 
@@ -20,4 +22,6 @@ export type UserInfoType = {
   infotechUserId?: number
 
   companyId?: number;
+
+  attendanceData?: AttendanceDataType;
 }
