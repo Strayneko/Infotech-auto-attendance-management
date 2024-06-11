@@ -8,6 +8,7 @@ import { sessionHelper } from '@/helpers/sessionHelper'
 import router from '@/router'
 import { tokenHelper } from '@/helpers/tokenHelper'
 import type { LocationHistoryType } from '@/types/location-history-type'
+import { fetchAttendanceLocationHistory } from '@/helpers/attendanceHistoryHelper'
 
 const isLoading = ref(false);
 const isLoggedIn = ref(false);
@@ -17,7 +18,7 @@ const responseData: any = ref(null);
 const userGroup = ref(null);
 const appPassword = ref<string>('');
 const attendanceLocation = ref<number>(1);
-const attendanceLocationHistories = ref<LocationHistoryType[]>([]);
+const attendanceLocationHistories = ref<LocationHistoryType[] | null>([]);
 
 const employeeId = ref('');
 const latitude = ref('');
@@ -36,9 +37,9 @@ onMounted(async () => {
 })
 
 watch(attendanceLocation, () => {
-  if (attendanceLocationHistories.value.length === 0) return;
+  if (attendanceLocationHistories.value?.length === 0) return;
 
-  const locationDetails = attendanceLocationHistories.value.find((location: LocationHistoryType) => location.id == attendanceLocation.value);
+  const locationDetails = attendanceLocationHistories.value?.find((location: LocationHistoryType) => location.id == attendanceLocation.value);
   if(!locationDetails) return;
 
   latitude.value = locationDetails.latitude;
@@ -92,35 +93,15 @@ const authenticate = async () => {
 
 const getAttendanceLocationHistory = async () => {
   try {
-    const path = '/attendance/location';
-    const reqTime = Date.now().toString();
-    const body = JSON.stringify({
-        companyId: responseData.value.data.companyId,
-        employeeId: responseData.value.data.employeeId,
-        customerId: responseData.value.data.customerId,
-        email: responseData.value.data.email,
-        token: responseData.value.data.token,
-        imei: responseData.value.data.imei,
-      });
-    const appToken = await tokenHelper(path, reqTime, body);
-    const response = await fetch(`${apiUrl}${path}?getLast=1`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-App-Token': appToken,
-        'X-Request-Time': reqTime,
-      } as any,
-      body,
-    })
-
-    const responseJson = await response.json();
-    if(!responseJson.status) {
-      Swal.fire('Error', responseJson.message, 'error');
-      return;
-    }
-
-    attendanceLocationHistories.value = responseJson.data;
-    if (attendanceLocationHistories.value.length > 0) {
+    attendanceLocationHistories.value = await fetchAttendanceLocationHistory({
+      companyId: responseData.value.data.companyId,
+      employeeId: responseData.value.data.employeeId,
+      customerId: responseData.value.data.customerId,
+      email: responseData.value.data.email,
+      token: responseData.value.data.token,
+      imei: responseData.value.data.imei,
+    });
+    if (attendanceLocationHistories.value !== null && attendanceLocationHistories.value.length > 0) {
       latitude.value = attendanceLocationHistories.value[0].latitude;
       longitude.value = attendanceLocationHistories.value[0].longitude;
       clockInLocation.value = attendanceLocationHistories.value[0].locationName;
