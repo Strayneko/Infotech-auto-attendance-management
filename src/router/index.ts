@@ -4,8 +4,7 @@ import SigninView from '@/views/Authentication/SigninView.vue'
 import SignupView from '@/views/Authentication/SignupView.vue'
 import CalendarView from '@/views/CalendarView.vue'
 import BasicChartView from '@/views/Charts/BasicChartView.vue'
-import ECommerceView from '@/views/Dashboard/ECommerceView.vue'
-import FormElementsView from '@/views/Attendance/AttendanceHistoryView.vue'
+import DashboardView from '@/views/Dashboard/DashboardView.vue'
 import FormLayoutView from '@/views/Forms/FormLayoutView.vue'
 import SettingsView from '@/views/Pages/SettingsView.vue'
 import ProfileView from '@/views/ProfileView.vue'
@@ -19,9 +18,9 @@ const routes = [
   {
     path: '/',
     name: 'dashboard',
-    component: ECommerceView,
+    component: DashboardView,
     meta: {
-      title: 'eCommerce Dashboard'
+      title: 'Auto Attendance Dashboard'
     }
   },
   {
