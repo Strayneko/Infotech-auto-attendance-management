@@ -45,7 +45,7 @@ const menuGroups = ref([
         route: '#',
         children: [
           { label: 'History', route: '/attendance/history' },
-          { label: 'Status', route: '/forms/form-layout' }
+          { label: 'Change Location', route: '/attendance/change-location' }
         ]
       },
     ]
